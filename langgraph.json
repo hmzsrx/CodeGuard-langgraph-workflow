@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "codeguard": "./nodes/main_node.py:supervisor_graph"
+  },
+  "env": ".env"
+}
