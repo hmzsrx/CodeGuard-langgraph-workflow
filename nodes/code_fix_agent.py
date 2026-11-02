@@ -3,6 +3,7 @@ import re
 
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
+from langgraph.config import get_stream_writer
 from langgraph.graph import START, END, StateGraph
 
 from state.agent_state import AgentState
@@ -63,8 +64,29 @@ Rules:
 {build_fix_input(state)}
 """
 
-        response = llm.invoke(prompt, config={"timeout": 60})
-        answer = str(response.content).strip()
+        writer = get_stream_writer()
+        writer({"type": "node_start", "node": "fix_code"})
+        response_parts = []
+        for chunk in llm.stream(prompt, config={"timeout": 60}):
+            content = chunk.content
+            if isinstance(content, str):
+                text = content
+            elif isinstance(content, list):
+                text = "".join(
+                    part.get("text", "")
+                    for part in content
+                    if isinstance(part, dict) and isinstance(part.get("text"), str)
+                )
+            else:
+                text = ""
+            if text:
+                response_parts.append(text)
+                writer({
+                    "type": "llm_token",
+                    "node": "code_fixer",
+                    "content": text,
+                })
+        answer = "".join(response_parts).strip()
 
         match = re.search(r"```[^\n]*\n(.*?)```", answer, flags=re.DOTALL)
 

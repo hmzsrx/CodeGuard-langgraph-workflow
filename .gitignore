@@ -52,6 +52,3 @@ logs/
 *.whl
 *.egg
 *.dist-info
-
-
-frontend/
