@@ -1,0 +1,21 @@
+node_modules
+dist
+.vite
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Git / IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs (optional)
+*.md

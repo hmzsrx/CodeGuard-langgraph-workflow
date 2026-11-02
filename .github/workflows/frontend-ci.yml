@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 
 name: CodeGuard AI Frontend CI/CD
+=======
+name: CodeGuard AI Frontend CI
+>>>>>>> a73d4e8e87f652ec529a8c10bb2240dbab5d62a5
 
 on:
   push:
@@ -9,7 +13,11 @@ on:
     branches: [main]
 
 jobs:
+<<<<<<< HEAD
   build-and-deploy:
+=======
+  build-and-push:
+>>>>>>> a73d4e8e87f652ec529a8c10bb2240dbab5d62a5
     runs-on: ubuntu-latest
 
     steps:
@@ -49,6 +57,7 @@ jobs:
 
       - name: Push Docker image
         if: github.event_name == 'push'
+<<<<<<< HEAD
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/codeguard-frontend:latest
 
@@ -90,3 +99,6 @@ jobs:
         run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+=======
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/codeguard-frontend:latest
+>>>>>>> a73d4e8e87f652ec529a8c10bb2240dbab5d62a5

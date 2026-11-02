@@ -3,6 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
+from langgraph.config import get_stream_writer
 from langgraph.graph import StateGraph, START, END
 
 
@@ -21,12 +22,13 @@ def analyze_code(state: AgentState) -> dict:
             "error_message": "No code was provided for review."
         }
 
-    llm = ChatGroq(
-        model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
-        temperature=0,
-    )
+    try:
+        llm = ChatGroq(
+            model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+            temperature=0,
+        )
 
-    prompt = f"""
+        prompt = f"""
 You are a senior software code reviewer.
 
 Identify the programming language from the code itself.
@@ -42,7 +44,7 @@ Do not claim you executed the code or tests.
 Do not invent issues.
 Keep your report under 400 words.
 
-“Agar user feedback diya gaya hai to usko review ki sabse upar priority do, chahe code mein aur koi bug na ho.”
+"Agar user feedback diya gaya hai to usko review ki sabse upar priority do, chahe code mein aur koi bug na ho."
 
 
 Return this format:
@@ -65,17 +67,44 @@ CODE:
 ```
 """
 
-    response = llm.invoke(prompt, config={"timeout": 60})
-    findings = str(response.content)
+        writer = get_stream_writer()
+        writer({"type": "node_start", "node": "analyze_code"})
+        response_parts = []
+        for chunk in llm.stream(prompt, config={"timeout": 60}):
+            content = chunk.content
+            if isinstance(content, str):
+                text = content
+            elif isinstance(content, list):
+                text = "".join(
+                    part.get("text", "")
+                    for part in content
+                    if isinstance(part, dict) and isinstance(part.get("text"), str)
+                )
+            else:
+                text = ""
+            if text:
+                response_parts.append(text)
+                writer({
+                    "type": "llm_token",
+                    "node": "code_reviewer",
+                    "content": text,
+                })
+        findings = "".join(response_parts)
 
 
-    return {
-        
-        "review_findings": findings,
-        "review_summary": findings,
-        "agents_run": state.get("agents_run", []) + ["Code Reviewer"],
-        "error_message": "",
-    }
+        return {
+
+            "review_findings": findings,
+            "review_summary": findings,
+            "agents_run": state.get("agents_run", []) + ["Code Reviewer"],
+            "error_message": "",
+        }
+
+    except Exception as exc:
+        return {
+            "error_message": f"Code review failed: {exc}",
+            "agents_run": state.get("agents_run", []) + ["Code Reviewer"],
+        }
 
 
 # Build the reviewer subgraph.

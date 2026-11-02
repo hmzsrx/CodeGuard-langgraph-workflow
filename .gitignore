@@ -51,9 +51,13 @@ logs/
 # Python wheels
 *.whl
 *.egg
+<<<<<<< HEAD
 *.dist-info
 
 
 frontend/
 .vercel
 .env*
+=======
+*.dist-info
+>>>>>>> a73d4e8e87f652ec529a8c10bb2240dbab5d62a5
